@@ -100,6 +100,9 @@ struct inode *samplefs_get_inode(struct super_block *sb, int mode, dev_t dev)
 				/* link == 2 (for initial ".." and "." entries) */
 				inode->i_nlink++;
 				break;
+			case S_IFLNK:
+				inode->i_op = &page_symlink_inode_operations;
+				break;
 		}
 	}
 	return inode;
