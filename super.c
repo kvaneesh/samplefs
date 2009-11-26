@@ -32,6 +32,7 @@
 #include <linux/version.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
+#include <linux/backing-dev.h>
 #include "samplefs.h"
 
 /* helpful if this is different than other fs */
@@ -39,6 +40,9 @@
 
 extern struct inode_operations sfs_dir_inode_ops;
 extern struct inode_operations sfs_file_inode_ops;
+extern struct file_operations sfs_file_operations;
+extern struct address_space_operations sfs_aops;
+
 static void samplefs_put_super(struct super_block *sb)
 {
 	struct samplefs_sb_info *sfs_sb;
@@ -60,6 +64,14 @@ struct super_operations samplefs_super_ops = {
 	.put_super      = samplefs_put_super,
 };
 
+static struct backing_dev_info sfs_backing_dev_info = {
+	.ra_pages       = 0,    /* No readahead */
+	.capabilities   = BDI_CAP_NO_ACCT_DIRTY | BDI_CAP_NO_WRITEBACK |
+				BDI_CAP_MAP_DIRECT | BDI_CAP_MAP_COPY |
+				BDI_CAP_READ_MAP | BDI_CAP_WRITE_MAP |
+				BDI_CAP_EXEC_MAP,
+};
+
 struct inode *samplefs_get_inode(struct super_block *sb, int mode, dev_t dev)
 {
 	struct inode * inode = new_inode(sb);
@@ -70,6 +82,8 @@ struct inode *samplefs_get_inode(struct super_block *sb, int mode, dev_t dev)
 		inode->i_gid = current_fsgid();
 		inode->i_blocks = 0;
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+		inode->i_mapping->a_ops = &sfs_aops;
+		inode->i_mapping->backing_dev_info = &sfs_backing_dev_info;
 		switch (mode & S_IFMT) {
 			default:
 				init_special_inode(inode, mode, dev);
@@ -77,6 +91,7 @@ struct inode *samplefs_get_inode(struct super_block *sb, int mode, dev_t dev)
 			case S_IFREG:
 				printk(KERN_INFO "file inode\n");
 				inode->i_op = &sfs_file_inode_ops;
+				inode->i_fop =  &sfs_file_operations;
 				break;
 			case S_IFDIR:
 				inode->i_op = &sfs_dir_inode_ops;
