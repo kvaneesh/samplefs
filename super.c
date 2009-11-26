@@ -37,6 +37,8 @@
 /* helpful if this is different than other fs */
 #define SAMPLEFS_MAGIC     0x73616d70 /* "SAMP" */
 
+extern struct inode_operations sfs_dir_inode_ops;
+extern struct inode_operations sfs_file_inode_ops;
 static void samplefs_put_super(struct super_block *sb)
 {
 	struct samplefs_sb_info *sfs_sb;
@@ -74,10 +76,10 @@ struct inode *samplefs_get_inode(struct super_block *sb, int mode, dev_t dev)
 				break;
 			case S_IFREG:
 				printk(KERN_INFO "file inode\n");
-				inode->i_op = &simple_dir_inode_operations;
+				inode->i_op = &sfs_file_inode_ops;
 				break;
 			case S_IFDIR:
-				inode->i_op = &simple_dir_inode_operations;
+				inode->i_op = &sfs_dir_inode_ops;
 
 				/* link == 2 (for initial ".." and "." entries) */
 				inode->i_nlink++;
