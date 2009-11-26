@@ -80,6 +80,7 @@ struct inode *samplefs_get_inode(struct super_block *sb, int mode, dev_t dev)
 				break;
 			case S_IFDIR:
 				inode->i_op = &sfs_dir_inode_ops;
+				inode->i_fop = &simple_dir_operations;
 
 				/* link == 2 (for initial ".." and "." entries) */
 				inode->i_nlink++;
